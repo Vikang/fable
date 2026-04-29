@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #fbf7f0;
+  --surface: #ffffff;
+  --accent: #d97757;
+  --secondary: #7bab91;
+  --tertiary: #e8b86d;
+  --text: #2b2825;
+  --text-muted: #7a736b;
+  --border: rgba(0, 0, 0, 0.06);
+  --gutter-line: rgba(43, 40, 37, 0.06);
+
+  --radius-tile: 16px;
+  --radius-card: 14px;
+  --radius-pill: 999px;
+  --radius-chip: 12px;
+  --radius-small: 8px;
+
+  --shadow-tile: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-canvas: 0 2px 14px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 8px 24px rgba(43, 40, 37, 0.18);
+
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --cat-people: #cfe5d8;
+  --cat-action: #f4dca8;
+  --cat-object: #ece6dc;
+  --cat-emotion: #f4c8b3;
+  --cat-animal: #ecbfa8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Lexend", system-ui, -apple-system, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* utterance chip pop-in */
+@keyframes chipIn {
+  from {
+    transform: translateY(6px) scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes badgePop {
+  from {
+    transform: translateY(8px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes barPulse {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cardRise {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes cardRiseLifted {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@keyframes traceIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
