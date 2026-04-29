@@ -41,3 +41,15 @@ assert.match(selectedImagesBeat.narration, /Mom/);
 assert.match(selectedImagesBeat.narration, /drink|sip|water/i);
 assert.doesNotMatch(selectedImagesBeat.narration, /Mango stepped into the morning/i);
 assert.equal(selectedImagesBeat.characterAnchors[0]?.name, "Mom");
+
+const mismatchedActionObjectBeat = composeLocalStory({
+  utterance: ["mom", "eat", "toy"],
+  turnIndex: 1,
+  characters: baseCharacters,
+  branchUsed: false,
+});
+
+assert.match(mismatchedActionObjectBeat.narration, /Mom/);
+assert.match(mismatchedActionObjectBeat.narration, /toy/i);
+assert.doesNotMatch(mismatchedActionObjectBeat.narration, /eat the toy/i);
+assert.doesNotMatch(mismatchedActionObjectBeat.narration, /wanted to eat/i);

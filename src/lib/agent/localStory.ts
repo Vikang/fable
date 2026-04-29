@@ -149,13 +149,19 @@ function buildSelectedImagesNarration(
   const object = storyParts.object?.label.toLowerCase();
   const emotion = storyParts.emotion?.label.toLowerCase();
   const actionClause = action ? describeAction(action, object) : null;
+  const pronoun = subjectPronoun(name);
+
+  if (action && object && !isCompatibleActionObject(action, object)) {
+    const actionGerund = actionAsGerund(action);
+    return `${name} noticed the ${object} and thought about ${actionGerund}. The ${object} was not for ${actionGerund}, so ${pronoun} turned it into a small surprise for the story.`;
+  }
 
   if (actionClause && object && emotion) {
     return `${name} felt ${emotion} and decided to ${actionClause}. The small choice changed the day, and the story opened a new path.`;
   }
 
   if (actionClause && object) {
-    return `${name} wanted to ${actionClause}. So ${name.toLowerCase()} tried it carefully, and something bright began to happen.`;
+    return `${name} wanted to ${actionClause}. So ${pronoun} tried it carefully, and something bright began to happen.`;
   }
 
   if (actionClause && emotion) {
@@ -200,6 +206,41 @@ function describeAction(action: string, object: string | undefined): string {
   };
 
   return actionPhrases[action] ?? `${action} with ${objectPhrase}`;
+}
+
+function isCompatibleActionObject(action: string, object: string): boolean {
+  const compatibleObjects: Partial<Record<string, string[]>> = {
+    drink: ["water"],
+    eat: ["cake"],
+    hug: ["toy"],
+    sleep: ["bed", "house"],
+    play: ["toy", "ball", "garden"],
+    run: ["garden", "house"],
+    go: ["garden", "house", "bed"],
+  };
+
+  return compatibleObjects[action]?.includes(object) ?? true;
+}
+
+function actionAsGerund(action: string): string {
+  const gerunds: Partial<Record<string, string>> = {
+    drink: "drinking",
+    eat: "eating",
+    hug: "hugging",
+    sleep: "sleeping",
+    play: "playing",
+    run: "running",
+    go: "going",
+  };
+
+  return gerunds[action] ?? `${action}ing`;
+}
+
+function subjectPronoun(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower === "mom") return "she";
+  if (lower === "dad") return "he";
+  return "they";
 }
 
 function buildSceneTags(utterance: string[], ids: Set<string>): string[] {

@@ -76,6 +76,8 @@ Fourth, it builds narration with `buildSelectedImagesNarration`. This is the key
 
 Fifth, it returns scene tags, a scene id, next vocabulary suggestions, and branch information so the rest of the app can update.
 
+The composer also checks whether an action/object pair makes sense. For example, `Eat + Cake` can become "eat the cake", but `Eat + Toy` should not become "eat the toy". When a pair is mismatched, the story still honors both selected images, but it pivots into a safer sentence about noticing the object and turning it into part of the story.
+
 ## Examples
 
 `["mom", "drink", "water"]` produces a story beat centered on Mom and water:
@@ -114,8 +116,9 @@ To add a new image tile:
 2. Pick the correct category: `people`, `animal`, `action`, `object`, or `emotion`.
 3. If it is a person or animal and needs nicer narration, add a description in `buildCharacter`.
 4. If it is an action that needs special grammar with objects, add it to `describeAction`.
-5. If it should influence mood, add it to `inferMood`.
-6. If it should affect scene choice or next vocabulary, update `chooseSceneId` or `buildNextVocab`.
+5. If it only makes sense with certain objects, update `isCompatibleActionObject`.
+6. If it should influence mood, add it to `inferMood`.
+7. If it should affect scene choice or next vocabulary, update `chooseSceneId` or `buildNextVocab`.
 
 ## Testing
 
