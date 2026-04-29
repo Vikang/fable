@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "../lib/store";
-import { getIllustration } from "../lib/scene/illustrations";
 import { useLongPress } from "../hooks/useLongPress";
 import { CharacterInteraction } from "./CharacterInteraction";
 
@@ -144,8 +143,12 @@ function SceneLayer({
   );
 }
 
+// Until the watercolor scene PNG is generated, render a calm Le Petit Prince
+// placeholder (cream paper, tiny green planet with a small prince silhouette,
+// scattered yellow stars). One placeholder for every scene id — once the PNG
+// lands in /public/scenes it covers this entirely. No emoji, no per-scene
+// glyphs: those looked jarring at full canvas size.
 function SceneSvgFallback({ id, kenBurns }: { id: string; kenBurns: boolean }) {
-  const ill = getIllustration(id);
   return (
     <svg
       viewBox="0 0 600 360"
@@ -155,46 +158,88 @@ function SceneSvgFallback({ id, kenBurns }: { id: string; kenBurns: boolean }) {
         animation: kenBurns ? "kenburns 6s var(--ease) forwards" : "none",
         transformOrigin: "center",
       }}
+      aria-hidden="true"
     >
       <defs>
-        <linearGradient id={`sky-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={ill.sky[0]} />
-          <stop offset="100%" stopColor={ill.sky[1]} />
+        <linearGradient id={`paper-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fbf7f0" />
+          <stop offset="100%" stopColor="#f5eddd" />
         </linearGradient>
-        <filter id={`watercolor-${id}`}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3" />
-          <feDisplacementMap in="SourceGraphic" scale="6" />
+        <radialGradient id={`planet-${id}`} cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#d8eadf" />
+          <stop offset="100%" stopColor="#a9c8b6" />
+        </radialGradient>
+        <filter id={`paint-${id}`}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="5" />
+          <feDisplacementMap in="SourceGraphic" scale="3" />
         </filter>
       </defs>
-      <rect width="600" height="360" fill={`url(#sky-${id})`} />
-      <ellipse cx="300" cy="320" rx="360" ry="90" fill={ill.ground} opacity="0.85" />
-      <circle cx="500" cy="80" r="40" fill={ill.accent} opacity="0.55" />
-      <g filter={`url(#watercolor-${id})`}>
-        <text
-          x="300"
-          y="220"
-          textAnchor="middle"
-          fontSize="160"
-          style={{ filter: "drop-shadow(0 2px 6px rgba(43,40,37,0.18))" }}
-        >
-          {ill.primary}
-        </text>
-        {ill.supporting[0] && (
-          <text x="120" y="260" textAnchor="middle" fontSize="80" opacity="0.85">
-            {ill.supporting[0]}
-          </text>
-        )}
-        {ill.supporting[1] && (
-          <text x="490" y="260" textAnchor="middle" fontSize="60" opacity="0.85">
-            {ill.supporting[1]}
-          </text>
-        )}
-        {ill.supporting[2] && (
-          <text x="300" y="120" textAnchor="middle" fontSize="44" opacity="0.7">
-            {ill.supporting[2]}
-          </text>
-        )}
+
+      <rect width="600" height="360" fill={`url(#paper-${id})`} />
+
+      <g fill="#e8b86d" opacity="0.85">
+        <Star cx={92} cy={62} r={3.5} />
+        <Star cx={186} cy={106} r={2.6} />
+        <Star cx={418} cy={48} r={3.2} />
+        <Star cx={520} cy={96} r={2.4} />
+        <Star cx={300} cy={36} r={2.8} />
+        <Star cx={68} cy={188} r={2.4} />
+        <Star cx={544} cy={184} r={3} />
       </g>
+
+      <g filter={`url(#paint-${id})`}>
+        <circle cx="300" cy="338" r="78" fill={`url(#planet-${id})`} />
+        <path
+          d="M256 312 Q272 296 286 312"
+          stroke="#7a9d83"
+          strokeWidth="2.4"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M318 318 Q336 296 354 318"
+          stroke="#7a9d83"
+          strokeWidth="2.4"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </g>
+
+      <g transform="translate(296,232)" opacity="0.92">
+        <ellipse cx="0" cy="38" rx="14" ry="22" fill="#a9c79a" />
+        <path d="M-12 28 q12 -6 24 0 l4 14 q-16 8 -32 0z" fill="#e8b86d" opacity="0.82" />
+        <circle cx="0" cy="6" r="14" fill="#f4dca8" />
+        <path
+          d="M-13 -2 q4 -10 13 -10 q9 0 13 10 q-6 4 -13 4 q-7 0 -13 -4z"
+          fill="#e8b86d"
+        />
+        <circle cx="-5" cy="6" r="1.2" fill="#2b2825" />
+        <circle cx="5" cy="6" r="1.2" fill="#2b2825" />
+        <path d="M-3 11 q3 2 6 0" stroke="#2b2825" strokeWidth="1" fill="none" strokeLinecap="round" />
+      </g>
+
+      <text
+        x="300"
+        y="84"
+        textAnchor="middle"
+        fontFamily="JetBrains Mono, ui-monospace, monospace"
+        fontSize="11"
+        fill="#7a736b"
+        letterSpacing="0.18em"
+        style={{ animation: "shimmer 2s ease-in-out infinite" }}
+      >
+        watercolor scene loading…
+      </text>
     </svg>
   );
+}
+
+function Star({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const points: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * i) / 5 - Math.PI / 2;
+    const radius = i % 2 === 0 ? r : r * 0.42;
+    points.push(`${cx + Math.cos(angle) * radius},${cy + Math.sin(angle) * radius}`);
+  }
+  return <polygon points={points.join(" ")} />;
 }

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "../lib/store";
 import { detectInteraction } from "../lib/interactions/detectInteraction";
 import type { InteractionPair } from "../lib/interactions/pairs";
 import { useInteractionImage } from "../hooks/useInteractionImage";
+import { useDraggable } from "../hooks/useDraggable";
 
 // Two-stage reactive overlay:
 //   Stage 1 — emote burst the moment a registered pair appears in the
@@ -59,10 +60,17 @@ export function CharacterInteraction() {
 
   const { imageUrl, loading } = useInteractionImage(visible ? activePair : null);
 
+  const boundsRef = useRef<HTMLDivElement>(null);
+  // Reset offset whenever the underlying pair OR the layout (centered ↔
+  // corner) changes — base position shifts so the old offset would teleport.
+  const resetKey = `${activePair?.cacheKey ?? ""}:${imageUrl ? "corner" : "center"}`;
+  const { offset, dragging, handlers } = useDraggable({ resetKey, boundsRef });
+
   if (!activePair) return null;
 
   return (
     <div
+      ref={boundsRef}
       role="img"
       aria-label={`Interaction: ${activePair.label}`}
       aria-live="polite"
@@ -86,17 +94,29 @@ export function CharacterInteraction() {
       )}
 
       <div
-        aria-hidden="true"
-        className="absolute"
+        role="button"
+        aria-label={`Drag ${activePair.label}`}
+        tabIndex={0}
+        className="absolute select-none pointer-events-auto"
+        {...handlers}
         style={{
           top: imageUrl ? "auto" : "50%",
           left: imageUrl ? 16 : "50%",
           bottom: imageUrl ? 16 : "auto",
-          transform: imageUrl ? "none" : "translate(-50%, -50%)",
+          // Compose base centering with the user's drag offset.
+          transform: imageUrl
+            ? `translate(${offset.x}px, ${offset.y}px)`
+            : `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
           fontSize: imageUrl ? 56 : 128,
-          filter: "drop-shadow(0 4px 14px rgba(43,40,37,0.28))",
-          animation: "emotePop 0.55s var(--spring)",
-          transition: "all 0.5s var(--spring)",
+          filter: dragging
+            ? "drop-shadow(0 10px 22px rgba(43,40,37,0.42))"
+            : "drop-shadow(0 4px 14px rgba(43,40,37,0.28))",
+          animation: dragging ? undefined : "emotePop 0.55s var(--spring)",
+          // Snap during drag, ease back to layout changes when idle.
+          transition: dragging
+            ? "filter 0.15s var(--ease)"
+            : "top 0.5s var(--spring), left 0.5s var(--spring), bottom 0.5s var(--spring), font-size 0.5s var(--spring), filter 0.2s var(--ease)",
+          ...handlers.style,
         }}
       >
         {activePair.emote}
