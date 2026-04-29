@@ -147,7 +147,6 @@ function SymbolArt({ symbol, compact }: { symbol: Symbol; compact: boolean }) {
             width: "100%",
             height: "100%",
             objectFit: "contain",
-            mixBlendMode: "multiply",
           }}
         />
       )}

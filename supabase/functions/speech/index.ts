@@ -13,7 +13,7 @@ interface SpeechInput {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders() });
+    return new Response(null, { headers: corsHeaders(req) });
   }
   if (req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
@@ -94,11 +94,13 @@ function bufferToBase64(buf: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function corsHeaders(): HeadersInit {
+function corsHeaders(req) {
+  const requested = req?.headers.get("Access-Control-Request-Headers");
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+    "Access-Control-Allow-Headers": requested ?? "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Max-Age": "600",
   };
 }
 

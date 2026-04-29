@@ -51,6 +51,8 @@ CONTINUITY:
 INPUT REFLECTION:
 - The child's tapped symbols are an *intent*, not a script. Weave them in naturally.
 - If the taps are sparse or unclear (one tap, mismatched), invent gracefully without breaking the arc.
+- DO NOT quote the tapped words back. Never write things like 'Mango whispered "cat dad mom"'. Translate intent into prose: e.g. taps [cat, mom, dad] → "Mango sat between Mom and Dad on the porch, listening to the evening hum." Treat taps as gestures, not dialogue.
+- DO NOT include narrator commentary like '...and the story carried on' or '...she thought about it'. Each beat moves the story forward concretely with new action, image, or feeling.
 
 NEXT-TURN VOCAB:
 - Suggest exactly 9 symbol ids the child is most likely to want next, based on what the story now offers.
@@ -92,7 +94,7 @@ function buildUserPrompt(input: PlanInput): string {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders() });
+    return new Response(null, { headers: corsHeaders(req) });
   }
   if (req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
@@ -169,17 +171,22 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function corsHeaders(): HeadersInit {
+function corsHeaders(req?: Request): HeadersInit {
+  // Echo the browser's requested headers back so we never block on a header
+  // the supabase-js client (or any future client) decides to send.
+  const requested = req?.headers.get("Access-Control-Request-Headers");
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+    "Access-Control-Allow-Headers":
+      requested ?? "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Max-Age": "600",
   };
 }
 
-function json(body: unknown, status = 200): Response {
+function json(body: unknown, status = 200, req?: Request): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders() },
+    headers: { "Content-Type": "application/json", ...corsHeaders(req) },
   });
 }

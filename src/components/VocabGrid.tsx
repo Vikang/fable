@@ -22,6 +22,11 @@ export function VocabGrid() {
       if (utterance.length > 0) sendUtterance();
       return;
     }
+    // Toggle: re-tapping a selected tile removes it instead of duplicating.
+    if (utterance.includes(id)) {
+      setUtterance(utterance.filter((x) => x !== id));
+      return;
+    }
     setUtterance([...utterance, id]);
   };
 

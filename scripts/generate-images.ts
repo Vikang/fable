@@ -72,7 +72,7 @@ interface ResponsesApiResponse {
   error?: { message?: string } | null;
 }
 
-async function fetchImage(prompt: string): Promise<Buffer> {
+async function fetchImageOnce(prompt: string): Promise<Buffer> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
   let res: Response;
@@ -109,6 +109,32 @@ async function fetchImage(prompt: string): Promise<Buffer> {
   const match = result.match(/^data:[^;]+;base64,(.+)$/);
   const b64 = match ? match[1] : result;
   return Buffer.from(b64, "base64");
+}
+
+// Transient errors (network drop, upstream timeout) get one retry with a
+// short backoff. Authentic model errors (bad prompt, quota) are not retried —
+// they'll fail fast on the second attempt too. We only catch network-shaped
+// failures here so retries don't paper over real prompt issues.
+const TRANSIENT_PATTERNS = [
+  /Network connection lost/i,
+  /ECONNRESET/i,
+  /ETIMEDOUT/i,
+  /fetch failed/i,
+  /aborted/i,
+  /TokenRouter 5\d\d/i,
+];
+
+async function fetchImage(prompt: string, attempt = 1): Promise<Buffer> {
+  try {
+    return await fetchImageOnce(prompt);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTransient = TRANSIENT_PATTERNS.some((p) => p.test(msg));
+    if (!isTransient || attempt >= 3) throw err;
+    const backoffMs = 2000 * attempt;
+    await new Promise((r) => setTimeout(r, backoffMs));
+    return fetchImage(prompt, attempt + 1);
+  }
 }
 
 interface JobResult {

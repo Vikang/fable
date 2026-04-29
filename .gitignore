@@ -13,3 +13,7 @@ dist
 
 # build artifacts
 *.tsbuildinfo
+
+# debug / capture artifacts
+.playwright-mcp
+fable-*.png

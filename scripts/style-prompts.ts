@@ -20,6 +20,9 @@ export const MASTER_STYLE =
   "A small painted ground beneath the subject when it makes sense " +
   "(a soft hill, a tiny round planet, or a patch of grass with little flowers). " +
   "Pure cream watercolor paper background, visible paper texture. " +
+  "Subjects rendered in their own natural watercolor colors on plain cream " +
+  "paper — no global colored wash, no tinted overlay, no orange or warm " +
+  "filter across the whole illustration. Normal brightness and saturation. " +
   "Childlike charm, warm and tender, story-book quality, generous airy " +
   "negative space. No text, no labels, no border, no signature, no frame.";
 
