@@ -17,6 +17,8 @@ export async function planTurn(args: {
   characters: CharacterAnchor[];
   branchUsed: boolean;
   branchChoiceId?: string;
+  priorNarration?: string[];
+  priorUtterances?: string[][];
 }): Promise<PlannedTurn> {
   return runAgent(args);
 }

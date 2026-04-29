@@ -125,6 +125,20 @@ button {
   }
 }
 
+/* Slow breathing pulse for the loading watercolor — gives the still
+   image a sense of liveness while the AI scene is being generated. */
+@keyframes sceneBreath {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    transform: scale(1.015);
+    filter: brightness(1.04) saturate(1.06);
+  }
+}
+
 @keyframes emotePop {
   0% {
     transform: translate(-50%, -50%) scale(0.2);

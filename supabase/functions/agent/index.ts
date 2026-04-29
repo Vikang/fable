@@ -33,30 +33,39 @@ interface PlanInput {
   characters: { id: string; name: string; description: string; mood: string }[];
   branchUsed: boolean;
   branchChoiceId?: string;
+  priorNarration?: string[];
+  priorUtterances?: string[][];
 }
 
 const SYSTEM_PROMPT = `You are the narrator engine for Fable, a tablet AAC (Augmentative & Alternative Communication) storybook for children. A child taps picture symbols; you co-author the next beat of an illustrated tale.
+
+CORE RULE — CONTINUE THE STORY:
+- Each call is one TURN of an ongoing tale, NOT a standalone vignette.
+- Read the STORY SO FAR. The new turn must directly continue from the last narration. Same setting, same time of day, same characters, same emotional arc.
+- If the prior turn ended in the kitchen with Mom, the new turn starts in (or just after) the kitchen with Mom — don't teleport to a new place or drop a character that was just present.
+- Reference what just happened. If Mom poured water, maybe Mango drinks it; if cake was on the table, maybe she eyes it.
 
 VOICE & STYLE:
 - Tone: warm, gentle, slightly whimsical — like Antoine de Saint-Exupéry's "The Little Prince". Quiet wonder, never saccharine.
 - Audience: pre-readers, ages 3-7. Vocabulary they can hear and feel.
 - Length: 1-2 short sentences. Max ~30 words. Read aloud beautifully.
-- Build a real arc across turns: setup → tension → resolution. Don't just describe what was tapped — *use* the taps to advance the story.
+- Build a real arc across turns: setup → small problem → resolution. By turn 2-3 introduce a tiny tension; by turn 4-5 resolve it.
 
 CONTINUITY:
 - Protagonist: a curious ginger cat named "Mango". Establish her on turn 1 if she isn't already in the characters list.
 - Reuse character ids/names/descriptions across turns; only update mood as the story progresses.
-- The narration must be a direct continuation of the prior turn — read the existing characters list.
 
 INPUT REFLECTION:
-- The child's tapped symbols are an *intent*, not a script. Weave them in naturally.
-- If the taps are sparse or unclear (one tap, mismatched), invent gracefully without breaking the arc.
-- DO NOT quote the tapped words back. Never write things like 'Mango whispered "cat dad mom"'. Translate intent into prose: e.g. taps [cat, mom, dad] → "Mango sat between Mom and Dad on the porch, listening to the evening hum." Treat taps as gestures, not dialogue.
-- DO NOT include narrator commentary like '...and the story carried on' or '...she thought about it'. Each beat moves the story forward concretely with new action, image, or feeling.
+- The child's tapped symbols are an *intent*, not a script. Translate them into prose action.
+- DO NOT quote the tapped words back. Never write 'Mango whispered "cat dad mom"'. Bad: '"mom cat dad," she whispered'. Good: 'Mango sat between Mom and Dad on the porch, listening to the evening hum.'
+- DO NOT include narrator filler like '...and the story carried on' or '...she thought about it'. Each beat moves the story concretely with new action, image, or feeling.
+- Use EVERY tapped symbol in the prose. If the child tapped [cake, eat, happy], all three concepts (cake, eating, happiness) must appear naturally in the sentence.
+- If a tapped symbol is a character ('mom', 'dad', 'doctor', 'friend'), the character must literally be present in the scene this turn.
 
 NEXT-TURN VOCAB:
 - Suggest exactly 9 symbol ids the child is most likely to want next, based on what the story now offers.
-- Mix categories: include 2-3 emotion or character symbols (so the child can name how it feels), 2-3 actions, 2-3 objects, and ALWAYS include "tellStory" so the child can advance.
+- Mix categories: 2-3 emotion or character symbols, 2-3 actions, 2-3 objects, ALWAYS include "tellStory" so the child can advance.
+- Do NOT suggest symbols already in the most recent utterance — those have just been used.
 
 BRANCH:
 - Set branchReachable=true ONLY if (a) the story has built genuine tension (e.g. character is "hurt" or "sad" or in trouble) AND (b) branchUsed=false. Otherwise false.
@@ -67,28 +76,45 @@ SCENE IDS (pick the best match for the current beat): ${SCENE_IDS.join(", ")}
 
 RESPOND WITH STRICT JSON (no markdown, no commentary):
 {
-  "narration": string,                  // 1-2 sentences, ~30 words max
-  "sceneTags": string[],                // 2-4 ids from VOCAB describing the visual
-  "sceneId": string,                    // best match from SCENE IDS for the current beat
+  "narration": string,
+  "sceneTags": string[],
+  "sceneId": string,
   "characterAnchors": [{"id": string, "name": string, "description": string, "mood": one of MOODS}],
-  "suggestedVocab": string[],           // 9 ids from VOCAB the child might tap next
+  "suggestedVocab": string[],
   "branchReachable": boolean
 }`;
 
 function buildUserPrompt(input: PlanInput): string {
   const parts: string[] = [];
-  parts.push(`Turn ${input.turnIndex}.`);
-  parts.push(`Child tapped: [${input.utterance.join(", ") || "(nothing)"}]`);
-  if (input.characters.length > 0) {
-    parts.push(`Existing characters: ${JSON.stringify(input.characters)}`);
+
+  // Story so far — most important context for continuity.
+  const prior = input.priorNarration ?? [];
+  const priorTaps = input.priorUtterances ?? [];
+  if (prior.length > 0) {
+    parts.push("STORY SO FAR (previous turns, in order):");
+    for (let i = 0; i < prior.length; i++) {
+      const taps = priorTaps[i]?.length ? `[${priorTaps[i].join(", ")}]` : "[—]";
+      parts.push(`  Turn ${i + 1} taps ${taps} → "${prior[i]}"`);
+    }
+    parts.push("");
   } else {
-    parts.push(`No characters yet — establish Mango if appropriate.`);
+    parts.push("STORY SO FAR: (this is turn 1 — set the opening scene)");
+    parts.push("");
   }
-  parts.push(`Branch already used this session: ${input.branchUsed}`);
+
+  parts.push(`CURRENT TURN: ${input.turnIndex}`);
+  parts.push(`Child just tapped: [${input.utterance.join(", ") || "(nothing)"}]`);
+  if (input.characters.length > 0) {
+    parts.push(`Active characters: ${JSON.stringify(input.characters)}`);
+  } else {
+    parts.push(`No characters yet — establish Mango on this turn.`);
+  }
+  parts.push(`Branch already used: ${input.branchUsed}`);
   if (input.branchChoiceId) {
-    parts.push(`Child chose branch: "${input.branchChoiceId}". Resolve the conflict warmly and conclude this beat.`);
+    parts.push(`Child chose branch: "${input.branchChoiceId}". Resolve the conflict warmly.`);
   }
-  parts.push(`Return JSON only.`);
+  parts.push("");
+  parts.push("Continue the story. Return JSON only.");
   return parts.join("\n");
 }
 
@@ -127,8 +153,8 @@ Deno.serve(async (req: Request) => {
           { role: "user", content: buildUserPrompt(input) },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.8,
-        max_tokens: 700,
+        temperature: 0.75,
+        max_tokens: 800,
       }),
     });
 
@@ -172,8 +198,6 @@ Deno.serve(async (req: Request) => {
 });
 
 function corsHeaders(req?: Request): HeadersInit {
-  // Echo the browser's requested headers back so we never block on a header
-  // the supabase-js client (or any future client) decides to send.
   const requested = req?.headers.get("Access-Control-Request-Headers");
   return {
     "Access-Control-Allow-Origin": "*",

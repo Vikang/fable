@@ -38,12 +38,17 @@ export function useAgentTurn() {
       )
     );
 
-    // 2. plan
+    // 2. plan — feed the model the story-so-far so it can continue the arc
+    // instead of inventing a new beat each turn. Cap at the last 5 turns to
+    // keep prompt size predictable.
+    const recentTurns = turns.slice(-5);
     const plan = await planTurn({
       utterance,
       turnIndex,
       characters: currentCharacters,
       branchUsed,
+      priorNarration: recentTurns.map((t) => t.narration),
+      priorUtterances: recentTurns.map((t) => t.utterance),
     });
     session.pushTrace(
       makeEntry(
