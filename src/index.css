@@ -125,6 +125,19 @@ button {
   }
 }
 
+/* Inline reaction-prompt card slides down from above the utterance
+   strip — gentle so it doesn't startle the child mid-tap. */
+@keyframes promptSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Slow breathing pulse for the loading watercolor — gives the still
    image a sense of liveness while the AI scene is being generated. */
 @keyframes sceneBreath {

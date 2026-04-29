@@ -15,6 +15,10 @@ export function StoryCanvas() {
 
   const [prevSceneId, setPrevSceneId] = useState<string | null>(null);
   const [showBadge, setShowBadge] = useState(false);
+  // Splash on first mount only: the Le Petit Prince loading watercolor sits
+  // on top of the scene for a beat before crossfading out, giving the demo
+  // a deliberate "opening the book" moment.
+  const [splashAlive, setSplashAlive] = useState(true);
   const prevRef = useRef(sceneId);
 
   // On scene change, hold the previous scene for a crossfade frame.
@@ -26,6 +30,13 @@ export function StoryCanvas() {
       return () => clearTimeout(t);
     }
   }, [sceneId]);
+
+  // Show the splash for ~2.2s, fade for 0.8s, then unmount it. The total
+  // (3s) matches the natural reading beat before the first agent turn.
+  useEffect(() => {
+    const t = window.setTimeout(() => setSplashAlive(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const longPress = useLongPress(() => {
     setShowBadge(true);
@@ -61,6 +72,8 @@ export function StoryCanvas() {
     >
       {prevSceneId && <SceneLayer id={prevSceneId} fading kenBurns />}
       <SceneLayer id={sceneId} kenBurns />
+
+      {splashAlive && <IntroSplash />}
 
       <CharacterInteraction />
 
@@ -143,10 +156,41 @@ function SceneLayer({
   );
 }
 
-// Loading screen shown until the per-scene PNG is generated. Uses the
-// pre-rendered Le Petit Prince watercolor (boy + fox + rose on the little
-// planet) at /loading.png. The "watercolor scene loading…" text is baked
-// into the image; the breathing animation gives it a sense of waiting.
+// First-mount splash: shows the Le Petit Prince loading watercolor on top
+// of the real scene for ~2.2s, then fades out over 0.8s, then unmounts.
+// Sits at z-index 5 so the turn label and badge still render on top, but
+// above both SceneLayer instances. After this dies once, scene changes
+// crossfade through SceneLayer's normal fadeIn/fadeOut, not the splash.
+function IntroSplash() {
+  return (
+    <div
+      className="absolute inset-0 overflow-hidden"
+      aria-hidden="true"
+      style={{
+        zIndex: 5,
+        animation: "fadeOut 0.8s var(--ease) 2.2s forwards",
+      }}
+    >
+      <img
+        src="/loading.png"
+        alt=""
+        loading="eager"
+        decoding="async"
+        className="w-full h-full"
+        style={{
+          objectFit: "cover",
+          transformOrigin: "center",
+          animation: "sceneBreath 4.5s ease-in-out infinite",
+        }}
+      />
+    </div>
+  );
+}
+
+// Persistent loading screen used by SceneLayer when a scene PNG is missing.
+// Same image as IntroSplash but stays put — no auto-fade — so the user
+// always has a watercolor on screen while a missing scene PNG is being
+// generated in the background.
 function SceneLoading({ kenBurns }: { kenBurns: boolean }) {
   return (
     <div className="absolute inset-0 overflow-hidden" aria-hidden="true">

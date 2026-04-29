@@ -22,6 +22,10 @@ export interface SessionState {
   currentNarration: string;
   currentCharacters: CharacterAnchor[];
 
+  // Active reaction prompt — the SymbolId that triggered the inline
+  // "what next?" card, or null if no prompt is open.
+  activePromptTrigger: string | null;
+
   // Branch state
   branchUsed: boolean;
   branchActive: boolean;
@@ -39,6 +43,8 @@ export interface SessionState {
   pushTurn: (t: Turn) => void;
   setScene: (sceneId: string, narration: string, chars: CharacterAnchor[]) => void;
   setCurating: (b: boolean) => void;
+
+  setActivePrompt: (trigger: string | null) => void;
 
   setBranchActive: (active: boolean, bundleIds?: string[]) => void;
   markBranchUsed: () => void;
@@ -66,6 +72,8 @@ export const useSession = create<SessionState>((set) => ({
     { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "happy" },
   ],
 
+  activePromptTrigger: null,
+
   branchUsed: false,
   branchActive: false,
   branchBundleIds: [],
@@ -81,6 +89,8 @@ export const useSession = create<SessionState>((set) => ({
   setScene: (sceneId, narration, chars) =>
     set({ currentSceneId: sceneId, currentNarration: narration, currentCharacters: chars }),
   setCurating: (b) => set({ curating: b }),
+
+  setActivePrompt: (trigger) => set({ activePromptTrigger: trigger }),
 
   setBranchActive: (active, bundleIds) =>
     set((s) => ({
@@ -105,6 +115,12 @@ export const useSession = create<SessionState>((set) => ({
       curating: false,
       turns: [],
       currentSceneId: "intro",
+      currentNarration:
+        "Once upon a morning, a curious little cat named Mango woke up to a sunny kitchen…",
+      currentCharacters: [
+        { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "happy" },
+      ],
+      activePromptTrigger: null,
       branchUsed: false,
       branchActive: false,
       branchBundleIds: [],

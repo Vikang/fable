@@ -3,6 +3,7 @@ import { getSymbol } from "../lib/vocab/symbols";
 import { SymbolTile } from "./SymbolTile";
 import { useFlipGrid } from "../hooks/useFlipGrid";
 import { useAgentTurn } from "../hooks/useAgentTurn";
+import { findReactionPrompt } from "../lib/prompts/reactionPrompts";
 
 // 3×3 grid (decision 7 — open book layout). FLIP rearranges when curate
 // updates the active vocab list (decision 9 / spec).
@@ -12,6 +13,7 @@ export function VocabGrid() {
   const setUtterance = useSession((s) => s.setUtterance);
   const curating = useSession((s) => s.curating);
   const phase = useSession((s) => s.phase);
+  const setActivePrompt = useSession((s) => s.setActivePrompt);
 
   const { containerRef } = useFlipGrid(vocab, (id) => id);
   const { sendUtterance } = useAgentTurn();
@@ -23,11 +25,17 @@ export function VocabGrid() {
       return;
     }
     // Toggle: re-tapping a selected tile removes it instead of duplicating.
+    // Untapping also closes any prompt that was triggered by this symbol.
     if (utterance.includes(id)) {
       setUtterance(utterance.filter((x) => x !== id));
+      setActivePrompt(null);
       return;
     }
     setUtterance([...utterance, id]);
+    // If this symbol has a registered reaction prompt, surface it.
+    // A new trigger replaces any open prompt — never stack.
+    const prompt = findReactionPrompt(id);
+    setActivePrompt(prompt ? id : null);
   };
 
   return (

@@ -3,6 +3,7 @@ import { BookSpread } from "./components/BookSpread";
 import { StoryCanvas } from "./components/StoryCanvas";
 import { Narration } from "./components/Narration";
 import { UtteranceStrip } from "./components/UtteranceStrip";
+import { ReactionPrompt } from "./components/ReactionPrompt";
 import { VocabGrid } from "./components/VocabGrid";
 import { BranchOverlay } from "./components/BranchOverlay";
 
@@ -20,6 +21,7 @@ export default function App() {
         right={
           <>
             <UtteranceStrip />
+            <ReactionPrompt />
             <VocabGrid />
           </>
         }
