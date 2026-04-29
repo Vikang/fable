@@ -4,13 +4,11 @@ export function TopBar() {
   const turns = useSession((s) => s.turns);
   const branchActive = useSession((s) => s.branchActive);
   const branchUsed = useSession((s) => s.branchUsed);
-  const devOpen = useSession((s) => s.devOpen);
-  const toggleDev = useSession((s) => s.toggleDev);
 
   const turnLabel =
     turns.length === 0
-      ? "turn 1 · “the cat who ate too much cake”"
-      : `turn ${turns.length + (branchActive ? 0 : 1)} · “the cat who ate too much cake”`;
+      ? "Page 1 · “the cat who ate too much cake”"
+      : `Page ${turns.length + (branchActive ? 0 : 1)} · “the cat who ate too much cake”`;
 
   return (
     <header
@@ -42,28 +40,6 @@ export function TopBar() {
         >
           ⌁ branch
         </span>
-        <button
-          className="flex items-center gap-2 px-3 py-1 rounded-pill text-xs"
-          onClick={toggleDev}
-          aria-pressed={devOpen}
-          style={{
-            background: devOpen ? "rgba(43,40,37,0.94)" : "transparent",
-            color: devOpen ? "#f7e7c5" : "var(--text-muted)",
-            border: `1px solid ${devOpen ? "rgba(43,40,37,0.94)" : "var(--border)"}`,
-            fontFamily: "var(--mono, 'JetBrains Mono')",
-          }}
-        >
-          <span
-            className="inline-block rounded-full"
-            style={{
-              width: 7,
-              height: 7,
-              background: devOpen ? "#e8b86d" : "var(--text-muted)",
-              animation: devOpen ? "shimmer 1.6s ease-in-out infinite" : "none",
-            }}
-          />
-          dev
-        </button>
       </div>
     </header>
   );

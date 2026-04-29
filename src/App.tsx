@@ -5,7 +5,6 @@ import { Narration } from "./components/Narration";
 import { UtteranceStrip } from "./components/UtteranceStrip";
 import { VocabGrid } from "./components/VocabGrid";
 import { BranchOverlay } from "./components/BranchOverlay";
-import { DevPanel } from "./components/DevPanel";
 
 export default function App() {
   return (
@@ -26,7 +25,6 @@ export default function App() {
         }
       />
       <BranchOverlay />
-      <DevPanel />
     </div>
   );
 }

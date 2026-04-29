@@ -43,7 +43,7 @@ export function StoryCanvas() {
   };
 
   const turnIndex = turns.length === 0 ? 1 : turns.length;
-  const turnLabel = phase === "branching" ? "choose a path" : `turn ${turnIndex}`;
+  const turnLabel = phase === "branching" ? "choose a path" : `Page ${turnIndex}`;
 
   return (
     <div
