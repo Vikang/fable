@@ -8,6 +8,11 @@ export interface PlanInput {
   characters: CharacterAnchor[];
   branchUsed: boolean;
   branchChoiceId?: string;
+  // Story-so-far context. Up to the last 5 turns of narration text and the
+  // tapped utterances that produced them, in chronological order. Lets the
+  // model continue the actual tale instead of starting a fresh beat.
+  priorNarration?: string[];
+  priorUtterances?: string[][];
 }
 
 export interface PlanOutput {
