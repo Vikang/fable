@@ -1,6 +1,7 @@
 import type { CharacterAnchor } from "../../types";
 import { getSupabase } from "../supabase";
 import { logTurn } from "./logTurn";
+import { composeLocalStory } from "./localStory";
 
 export interface PlanInput {
   utterance: string[];
@@ -40,8 +41,8 @@ const MOODS = new Set<CharacterAnchor["mood"]>([
 ]);
 
 // Real model call via the Supabase Edge Function `agent`, which routes to
-// TokenRouter (anthropic/claude-opus-4.5). Falls back to the scripted reasoner
-// on any error so the demo never bricks.
+// TokenRouter. If the edge function is unavailable locally, compose a real
+// story beat from the child's taps instead of dropping to canned demo lines.
 export async function runAgent(input: PlanInput): Promise<PlanOutput> {
   const started = performance.now();
 
@@ -57,13 +58,13 @@ export async function runAgent(input: PlanInput): Promise<PlanOutput> {
     return output;
   } catch (err) {
     if (import.meta.env.DEV) {
-      console.warn("runAgent: edge call failed, falling back to scripted:", err);
+      console.warn("runAgent: edge call failed, using local story composer:", err);
     }
-    const output = scriptedRunAgent(input);
+    const output = composeLocalStory(input);
     logTurn({
       input,
       output,
-      model: "scripted-fallback",
+      model: "local-story-fallback",
       latencyMs: Math.round(performance.now() - started),
     });
     return output;
@@ -119,96 +120,3 @@ function sanitize(raw: EdgeAgentResponse, input: PlanInput): PlanOutput {
     branchReachable: Boolean(raw.branchReachable) && !input.branchUsed,
   };
 }
-
-// ---- Scripted fallback (preserved verbatim from the demo's original logic) --
-
-function scriptedRunAgent(input: PlanInput): PlanOutput {
-  const { utterance, turnIndex, branchUsed, branchChoiceId } = input;
-  const u = new Set(utterance);
-
-  if (branchChoiceId) {
-    return BRANCH_RESOLUTIONS[branchChoiceId];
-  }
-
-  if (turnIndex === 1 && u.has("cat") && u.has("eat") && u.has("cake")) {
-    return {
-      narration:
-        "Mango spotted a beautiful cake on the kitchen table. She couldn't resist — she gobbled up every last crumb!",
-      sceneTags: ["cat", "eat", "cake"],
-      characterAnchors: [
-        { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "happy" },
-      ],
-      suggestedVocab: [
-        "cat", "mom", "doctor", "hurt", "sad", "tellStory", "medicine", "hug", "bed",
-      ],
-      branchReachable: false,
-    };
-  }
-
-  if (turnIndex === 2 && u.has("cat") && (u.has("hurt") || u.has("sad"))) {
-    return {
-      narration:
-        "Soon Mango's tummy began to hurt. She curled up tight and let out a tiny mew — what should we do?",
-      sceneTags: ["cat", "hurt", "tummy"],
-      characterAnchors: [
-        { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "hurt" },
-      ],
-      suggestedVocab: [
-        "doctor", "mom", "hug", "medicine", "sleep", "water", "bed", "sad", "cat",
-      ],
-      branchReachable: !branchUsed,
-    };
-  }
-
-  return {
-    narration:
-      utterance.length > 0
-        ? `Mango thought about it. "${humanizeUtterance(utterance)}," she whispered, and the story carried on.`
-        : "The story drifted on like a paper boat.",
-    sceneTags: utterance,
-    characterAnchors: input.characters,
-    suggestedVocab: ["cat", "mom", "dad", "eat", "drink", "hug", "cake", "toy", "tellStory"],
-    branchReachable: false,
-  };
-}
-
-function humanizeUtterance(ids: string[]): string {
-  return ids.join(" ");
-}
-
-const BRANCH_RESOLUTIONS: Record<string, PlanOutput> = {
-  comfort: {
-    narration:
-      "Mom scooped Mango up into the warmest hug. Slowly, the tummy-ache faded into a soft, sleepy purr.",
-    sceneTags: ["comfort", "hug", "mom"],
-    characterAnchors: [
-      { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "comforted" },
-      { id: "mom", name: "Mom", description: "Mango's mom", mood: "happy" },
-    ],
-    suggestedVocab: ["happy", "love", "sleep", "hug", "mom", "cat", "play", "garden", "tellStory"],
-    branchReachable: false,
-  },
-  doctor: {
-    narration:
-      "Mom called the doctor right away. The doctor gave Mango a tiny spoon of medicine and a kind smile.",
-    sceneTags: ["doctor", "medicine", "heal"],
-    characterAnchors: [
-      { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "healed" },
-      { id: "doctor", name: "Doctor", description: "the kind doctor", mood: "happy" },
-    ],
-    suggestedVocab: [
-      "happy", "love", "play", "mom", "doctor", "cat", "garden", "friend", "tellStory",
-    ],
-    branchReachable: false,
-  },
-  rest: {
-    narration:
-      "Mom tucked Mango into the softest bed with a sip of cool water. She closed her eyes and slept until the hurt drifted away.",
-    sceneTags: ["rest", "sleep", "bed"],
-    characterAnchors: [
-      { id: "mango", name: "Mango", description: "a curious ginger cat", mood: "tired" },
-    ],
-    suggestedVocab: ["happy", "love", "play", "mom", "cat", "garden", "friend", "toy", "tellStory"],
-    branchReachable: false,
-  },
-};

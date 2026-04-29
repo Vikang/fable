@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b",
     "generate-images": "tsx --env-file=.env.local scripts/generate-images.ts",
     "generate-symbols": "tsx --env-file=.env.local scripts/generate-images.ts --kind=symbols",
     "generate-scenes": "tsx --env-file=.env.local scripts/generate-images.ts --kind=scenes"
