@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "../lib/store";
 import { getIllustration } from "../lib/scene/illustrations";
 import { useLongPress } from "../hooks/useLongPress";
+import { CharacterInteraction } from "./CharacterInteraction";
 
-// Watercolor-style illustration: SVG backdrop + floating motif glyphs with a
-// gentle turbulence filter to imply paint texture, plus crossfade + ken-burns
-// between scenes.
+// Watercolor-style illustration: pre-baked watercolor PNG layered over an SVG
+// fallback. The SVG composition (gradient sky + motif glyphs with a subtle
+// turbulence filter) remains as the graceful fallback if the PNG hasn't been
+// generated yet, so the demo never shows a broken image.
 export function StoryCanvas() {
   const sceneId = useSession((s) => s.currentSceneId);
   const characters = useSession((s) => s.currentCharacters);
@@ -49,9 +51,10 @@ export function StoryCanvas() {
       role="img"
       aria-label={`Story scene: ${moodCopy[character?.mood ?? "neutral"] ?? "scene"}`}
       aria-live="polite"
-      className="relative overflow-hidden rounded-card shadow-canvas"
+      className="relative overflow-hidden rounded-card shadow-canvas w-full"
       style={{
-        height: 360,
+        flex: "1 1 auto",
+        minHeight: 320,
         border: "1px solid var(--border)",
         background: "var(--surface)",
       }}
@@ -59,6 +62,8 @@ export function StoryCanvas() {
     >
       {prevSceneId && <SceneLayer id={prevSceneId} fading kenBurns />}
       <SceneLayer id={sceneId} kenBurns />
+
+      <CharacterInteraction />
 
       <div
         className="absolute top-3 left-3 px-2.5 py-1 rounded-chip text-xs"
@@ -106,7 +111,8 @@ function SceneLayer({
   fading?: boolean;
   kenBurns?: boolean;
 }) {
-  const ill = getIllustration(id);
+  const [imageFailed, setImageFailed] = useState(false);
+
   return (
     <div
       className="absolute inset-0"
@@ -116,55 +122,79 @@ function SceneLayer({
         transition: "opacity 0.7s var(--ease)",
       }}
     >
-      <svg
-        viewBox="0 0 600 360"
-        preserveAspectRatio="xMidYMid slice"
-        className="w-full h-full"
-        style={{
-          animation: kenBurns ? "kenburns 6s var(--ease) forwards" : "none",
-          transformOrigin: "center",
-        }}
-      >
-        <defs>
-          <linearGradient id={`sky-${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={ill.sky[0]} />
-            <stop offset="100%" stopColor={ill.sky[1]} />
-          </linearGradient>
-          <filter id={`watercolor-${id}`}>
-            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3" />
-            <feDisplacementMap in="SourceGraphic" scale="6" />
-          </filter>
-        </defs>
-        <rect width="600" height="360" fill={`url(#sky-${id})`} />
-        <ellipse cx="300" cy="320" rx="360" ry="90" fill={ill.ground} opacity="0.85" />
-        <circle cx="500" cy="80" r="40" fill={ill.accent} opacity="0.55" />
-        <g filter={`url(#watercolor-${id})`}>
-          <text
-            x="300"
-            y="220"
-            textAnchor="middle"
-            fontSize="160"
-            style={{ filter: "drop-shadow(0 2px 6px rgba(43,40,37,0.18))" }}
-          >
-            {ill.primary}
-          </text>
-          {ill.supporting[0] && (
-            <text x="120" y="260" textAnchor="middle" fontSize="80" opacity="0.85">
-              {ill.supporting[0]}
-            </text>
-          )}
-          {ill.supporting[1] && (
-            <text x="490" y="260" textAnchor="middle" fontSize="60" opacity="0.85">
-              {ill.supporting[1]}
-            </text>
-          )}
-          {ill.supporting[2] && (
-            <text x="300" y="120" textAnchor="middle" fontSize="44" opacity="0.7">
-              {ill.supporting[2]}
-            </text>
-          )}
-        </g>
-      </svg>
+      {imageFailed ? (
+        <SceneSvgFallback id={id} kenBurns={kenBurns} />
+      ) : (
+        <img
+          src={`/scenes/${id}.png`}
+          alt=""
+          aria-hidden="true"
+          onError={() => setImageFailed(true)}
+          loading="eager"
+          decoding="async"
+          className="w-full h-full"
+          style={{
+            objectFit: "cover",
+            animation: kenBurns ? "kenburns 6s var(--ease) forwards" : "none",
+            transformOrigin: "center",
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function SceneSvgFallback({ id, kenBurns }: { id: string; kenBurns: boolean }) {
+  const ill = getIllustration(id);
+  return (
+    <svg
+      viewBox="0 0 600 360"
+      preserveAspectRatio="xMidYMid slice"
+      className="w-full h-full"
+      style={{
+        animation: kenBurns ? "kenburns 6s var(--ease) forwards" : "none",
+        transformOrigin: "center",
+      }}
+    >
+      <defs>
+        <linearGradient id={`sky-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={ill.sky[0]} />
+          <stop offset="100%" stopColor={ill.sky[1]} />
+        </linearGradient>
+        <filter id={`watercolor-${id}`}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3" />
+          <feDisplacementMap in="SourceGraphic" scale="6" />
+        </filter>
+      </defs>
+      <rect width="600" height="360" fill={`url(#sky-${id})`} />
+      <ellipse cx="300" cy="320" rx="360" ry="90" fill={ill.ground} opacity="0.85" />
+      <circle cx="500" cy="80" r="40" fill={ill.accent} opacity="0.55" />
+      <g filter={`url(#watercolor-${id})`}>
+        <text
+          x="300"
+          y="220"
+          textAnchor="middle"
+          fontSize="160"
+          style={{ filter: "drop-shadow(0 2px 6px rgba(43,40,37,0.18))" }}
+        >
+          {ill.primary}
+        </text>
+        {ill.supporting[0] && (
+          <text x="120" y="260" textAnchor="middle" fontSize="80" opacity="0.85">
+            {ill.supporting[0]}
+          </text>
+        )}
+        {ill.supporting[1] && (
+          <text x="490" y="260" textAnchor="middle" fontSize="60" opacity="0.85">
+            {ill.supporting[1]}
+          </text>
+        )}
+        {ill.supporting[2] && (
+          <text x="300" y="120" textAnchor="middle" fontSize="44" opacity="0.7">
+            {ill.supporting[2]}
+          </text>
+        )}
+      </g>
+    </svg>
   );
 }

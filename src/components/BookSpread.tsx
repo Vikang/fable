@@ -8,13 +8,16 @@ export function BookSpread({ left, right }: { left: ReactNode; right: ReactNode 
     <div
       className="relative flex w-full"
       style={{
-        gap: 28,
-        padding: "20px 28px 28px 28px",
+        gap: 24,
+        padding: "16px 24px 24px 24px",
         flex: 1,
         minHeight: 0,
       }}
     >
-      <div style={{ flex: "0 0 58%", minWidth: 0 }} className="flex flex-col">
+      <div
+        style={{ flex: "0 0 58%", minWidth: 0, minHeight: 0 }}
+        className="flex flex-col"
+      >
         {left}
       </div>
       <div
@@ -25,7 +28,10 @@ export function BookSpread({ left, right }: { left: ReactNode; right: ReactNode 
           background: "var(--gutter-line)",
         }}
       />
-      <div style={{ flex: "0 0 calc(42% - 28px - 1px)", minWidth: 0 }} className="flex flex-col">
+      <div
+        style={{ flex: "0 0 calc(42% - 24px - 1px)", minWidth: 0, minHeight: 0 }}
+        className="flex flex-col"
+      >
         {right}
       </div>
     </div>

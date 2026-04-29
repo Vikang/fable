@@ -57,8 +57,10 @@ export function useAgentTurn() {
       )
     );
 
-    // 3. render
-    let sceneId = matchIllustration(plan.sceneTags, plan.characterAnchors.map((c) => c.id));
+    // 3. render — prefer LLM-emitted sceneId; fall back to tag matching
+    let sceneId =
+      plan.sceneId ??
+      matchIllustration(plan.sceneTags, plan.characterAnchors.map((c) => c.id));
     session.pushTrace(
       makeEntry(
         [

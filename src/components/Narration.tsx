@@ -8,8 +8,9 @@ export function Narration() {
   return (
     <section
       aria-label="Narration"
-      className="rounded-card px-5 py-4 mt-4"
+      className="rounded-card px-5 py-4 mt-3"
       style={{
+        flexShrink: 0,
         background: "var(--surface)",
         border: "1px solid var(--border)",
         boxShadow: "var(--shadow-tile)",

@@ -4,6 +4,8 @@ import { runAgent } from "./client";
 export interface PlannedTurn {
   narration: string;
   sceneTags: string[];
+  // Optional LLM-emitted scene id; orchestrator prefers it when set.
+  sceneId?: string;
   characterAnchors: CharacterAnchor[];
   suggestedVocab: string[];
   branchReachable: boolean;

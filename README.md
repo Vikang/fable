@@ -17,6 +17,32 @@ npm run dev      # http://localhost:5173
 npm run build    # type-check + vite build
 ```
 
+## Watercolor imagery (Little Prince style)
+
+Symbol tiles and story scenes use AI-generated watercolor PNGs in the visual
+language of Saint-Exupéry's *Le Petit Prince* — soft washes, cream paper,
+hand-drawn ink, scattered yellow stars. Images are pre-baked into
+`/public/symbols` and `/public/scenes` so they ship as static assets and
+render instantly.
+
+```sh
+# Bake everything (skips files that already exist)
+npm run generate-images
+
+# Re-bake specific ids after tweaking prompts
+npm run generate-images -- --only=cat,dog,kitchen-cake --force
+
+# Adjust parallel requests (each call ≈ 3 min, ~$0.22)
+npm run generate-images -- --concurrency=4
+```
+
+The artistic direction lives in [`scripts/style-prompts.ts`](scripts/style-prompts.ts).
+Tune `MASTER_STYLE` to dial the look up or down — every per-symbol prompt
+inherits from it. The script calls TokenRouter's `/v1/responses` endpoint with
+the model from `TOKENROUTER_MODEL_IMAGE` (default `openai/gpt-5.4-image-2`).
+Tiles fall back to the emoji glyph if a PNG is missing, so the demo never
+breaks mid-bake.
+
 ## Demo arc
 
 1. Tap **Cat → Eat → Cake → tell story** — narration plays, vocabulary FLIP-rearranges.

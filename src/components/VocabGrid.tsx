@@ -26,7 +26,7 @@ export function VocabGrid() {
   };
 
   return (
-    <section className="flex flex-col gap-2 mt-4" aria-label="Symbol vocabulary">
+    <section className="flex flex-col gap-2 mt-3 w-full" aria-label="Symbol vocabulary">
       <div className="flex items-center justify-between text-xs" style={{ color: "var(--text-muted)" }}>
         <span style={{ fontFamily: "JetBrains Mono", letterSpacing: "0.06em" }}>
           VOCABULARY · curated for this moment
@@ -48,8 +48,12 @@ export function VocabGrid() {
       </div>
       <div
         ref={containerRef}
-        className="grid grid-cols-3 gap-3"
-        style={{ opacity: curating ? 0.55 : 1, transition: "opacity 0.25s var(--ease)" }}
+        className="grid grid-cols-3 w-full"
+        style={{
+          gap: 8,
+          opacity: curating ? 0.55 : 1,
+          transition: "opacity 0.25s var(--ease)",
+        }}
         role="grid"
       >
         {vocab.map((id) => {
@@ -59,7 +63,6 @@ export function VocabGrid() {
               key={id}
               symbol={sym}
               onTap={onTap}
-              size={104}
               pressed={utterance.includes(id)}
             />
           );
